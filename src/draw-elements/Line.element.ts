@@ -1,4 +1,4 @@
-import { createDrawElementConfig } from "../draw-elements-drawer/register-drawers";
+import { createDrawElementConfig } from "../draw-elements-drawer/DrawElementConfig";
 
 export interface Line {
   color: string;
@@ -17,7 +17,6 @@ declare module "./DrawElements" {
 export const config = createDrawElementConfig({
   name: "Line",
   draw(line, ctx) {
-    console.log(line);
     ctx.strokeStyle = line.color;
     ctx.beginPath();
     ctx.moveTo(line.x0, line.y0);

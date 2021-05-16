@@ -1,8 +1,5 @@
-import {
-  DrawElementByType,
-  DrawElementType,
-} from "../draw-elements/DrawElements";
-import { DrawElementsDrawer } from "./DrawElementsDrawer";
+import { DrawElementType } from "../draw-elements/DrawElements";
+import { DrawElementConfig } from "./DrawElementConfig";
 
 function importAll(r: any) {
   return r.keys().map(r);
@@ -13,23 +10,6 @@ function getAllDrawers(): DrawElementConfig<DrawElementType>[] {
     // @ts-ignore
     require.context("../draw-elements/", true, /\.element\.ts$/)
   ).map((x: { config: DrawElementConfig<any> }) => x.config);
-}
-
-export interface DrawElementConfig<Type extends DrawElementType> {
-  name: Type;
-  draw: DrawElementsDrawer<Type>;
-  onCreate(x: number, y: number): DrawElementByType<Type>;
-  onPointerMove: (
-    dx: number,
-    dy: number,
-    element: DrawElementByType<Type>
-  ) => Partial<DrawElementByType<Type>>;
-}
-
-export function createDrawElementConfig<Type extends DrawElementType>(
-  config: DrawElementConfig<Type>
-): DrawElementConfig<Type> {
-  return config;
 }
 
 let drawElementConfigRegistry: Record<DrawElementType, DrawElementConfig<any>>;

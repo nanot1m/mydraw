@@ -16,6 +16,7 @@
     "typescript": "^4.1.2",
     "web-vitals": "^1.0.1"
   },
+  "homepage": "https://nanot1m.github.io/mydraw/",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

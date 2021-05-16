@@ -14,6 +14,12 @@ interface DrawElement<Type extends keyof DrawElements = DrawElementType> {
   props: DrawElements[Type];
 }
 
+const drawElementConfigRegistry = getDrawElementConfigRegistry();
+
+const elementTypes = Object.keys(
+  drawElementConfigRegistry
+) as DrawElementType[];
+
 interface AppState {
   drawElements: DrawElement[];
   draftElement: DrawElement | null;
@@ -23,7 +29,7 @@ interface AppState {
 const initialState: AppState = {
   drawElements: [],
   draftElement: null,
-  activeTool: "Line",
+  activeTool: elementTypes[0],
 };
 
 function createDraftElement(drawElement: DrawElement) {
@@ -90,8 +96,6 @@ function appReducer(state: AppState, action: Action): AppState {
       };
   }
 }
-
-const drawElementConfigRegistry = getDrawElementConfigRegistry();
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -196,18 +200,15 @@ function App() {
   return (
     <div className="App">
       <div className="App__toolbar">
-        <button
-          disabled={state.activeTool === "Line"}
-          onClick={() => dispatch(setActiveTool("Line"))}
-        >
-          L
-        </button>
-        <button
-          disabled={state.activeTool === "Rect"}
-          onClick={() => dispatch(setActiveTool("Rect"))}
-        >
-          R
-        </button>
+        {elementTypes.map((elementType) => (
+          <button
+            key={elementType}
+            disabled={state.activeTool === elementType}
+            onClick={() => dispatch(setActiveTool(elementType))}
+          >
+            {elementType}
+          </button>
+        ))}
       </div>
       <canvas className="App__canvas" ref={canvasRef}></canvas>
     </div>
