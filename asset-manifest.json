@@ -1,22 +1,22 @@
 {
   "files": {
     "main.css": "/mydraw/static/css/main.00299655.chunk.css",
-    "main.js": "/mydraw/static/js/main.2ddd6a50.chunk.js",
-    "main.js.map": "/mydraw/static/js/main.2ddd6a50.chunk.js.map",
-    "runtime-main.js": "/mydraw/static/js/runtime-main.7f430bff.js",
-    "runtime-main.js.map": "/mydraw/static/js/runtime-main.7f430bff.js.map",
-    "static/js/2.42977a84.chunk.js": "/mydraw/static/js/2.42977a84.chunk.js",
-    "static/js/2.42977a84.chunk.js.map": "/mydraw/static/js/2.42977a84.chunk.js.map",
-    "static/js/3.0c0f6450.chunk.js": "/mydraw/static/js/3.0c0f6450.chunk.js",
-    "static/js/3.0c0f6450.chunk.js.map": "/mydraw/static/js/3.0c0f6450.chunk.js.map",
+    "main.js": "/mydraw/static/js/main.d1b2ce50.chunk.js",
+    "main.js.map": "/mydraw/static/js/main.d1b2ce50.chunk.js.map",
+    "runtime-main.js": "/mydraw/static/js/runtime-main.41ba2e78.js",
+    "runtime-main.js.map": "/mydraw/static/js/runtime-main.41ba2e78.js.map",
+    "static/js/2.804ea1d3.chunk.js": "/mydraw/static/js/2.804ea1d3.chunk.js",
+    "static/js/2.804ea1d3.chunk.js.map": "/mydraw/static/js/2.804ea1d3.chunk.js.map",
+    "static/js/3.bbbc850e.chunk.js": "/mydraw/static/js/3.bbbc850e.chunk.js",
+    "static/js/3.bbbc850e.chunk.js.map": "/mydraw/static/js/3.bbbc850e.chunk.js.map",
     "index.html": "/mydraw/index.html",
     "static/css/main.00299655.chunk.css.map": "/mydraw/static/css/main.00299655.chunk.css.map",
-    "static/js/2.42977a84.chunk.js.LICENSE.txt": "/mydraw/static/js/2.42977a84.chunk.js.LICENSE.txt"
+    "static/js/2.804ea1d3.chunk.js.LICENSE.txt": "/mydraw/static/js/2.804ea1d3.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
-    "static/js/runtime-main.7f430bff.js",
-    "static/js/2.42977a84.chunk.js",
+    "static/js/runtime-main.41ba2e78.js",
+    "static/js/2.804ea1d3.chunk.js",
     "static/css/main.00299655.chunk.css",
-    "static/js/main.2ddd6a50.chunk.js"
+    "static/js/main.d1b2ce50.chunk.js"
   ]
 }
