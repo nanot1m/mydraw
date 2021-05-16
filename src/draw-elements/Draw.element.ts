@@ -1,4 +1,5 @@
 import { createDrawElementConfig } from "../draw-elements-drawer/DrawElementConfig";
+import { freehandDraw } from "../freehand-draw";
 
 export interface Draw {
   color: string;
@@ -17,13 +18,7 @@ export const config = createDrawElementConfig({
     if (draw.points.length === 0) {
       return;
     }
-    ctx.beginPath();
-    ctx.strokeStyle = draw.color;
-    ctx.moveTo(...draw.points[0]);
-    draw.points.forEach((point) => {
-      ctx.lineTo(...point);
-    });
-    ctx.stroke();
+    freehandDraw(draw.points, draw.color, ctx);
   },
   onCreate(x, y) {
     return {

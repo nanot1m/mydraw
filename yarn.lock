@@ -8132,6 +8132,11 @@ pbkdf2@^3.0.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
+perfect-freehand@^0.4.71:
+  version "0.4.71"
+  resolved "https://registry.yarnpkg.com/perfect-freehand/-/perfect-freehand-0.4.71.tgz#b98ffc3cbc4e3cd930528e8d74a8849ee77475fb"
+  integrity sha512-bJ3w2E6WcUfZJTXWPlS7DI6FIT9rRIYSCXgDYjvST8sAe/c+zNnJnlfJp3q8Hk1uPt9dH7bFuj8Sico6CKZw7A==
+
 performance-now@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-2.1.0.tgz#6309f4e0e5fa913ec1c69307ae364b4b377c9e7b"

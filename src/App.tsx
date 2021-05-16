@@ -130,7 +130,8 @@ function App() {
 
     let lastClientX = 0;
     let lastClientY = 0;
-    function handleMouseMove(ev: MouseEvent) {
+
+    function handlePointerMove(ev: MouseEvent) {
       if (draftElementRef.current == null) {
         return;
       }
@@ -148,6 +149,9 @@ function App() {
     }
 
     function handlePointerDown(ev: MouseEvent) {
+      if (ev.buttons !== 1) {
+        return;
+      }
       lastClientX = ev.clientX;
       lastClientY = ev.clientY;
       dispatch(
@@ -157,12 +161,12 @@ function App() {
           props: activeElementConfig.onCreate(ev.clientX, ev.clientY),
         })
       );
-      document.addEventListener("pointermove", handleMouseMove);
+      document.addEventListener("pointermove", handlePointerMove);
     }
 
     function handlePointerUp() {
       dispatch(saveDraftElement());
-      document.removeEventListener("pointermove", handleMouseMove);
+      document.removeEventListener("pointermove", handlePointerMove);
     }
 
     document.addEventListener("pointerdown", handlePointerDown);
@@ -199,7 +203,10 @@ function App() {
 
   return (
     <div className="App">
-      <div className="App__toolbar">
+      <div
+        className="App__toolbar"
+        onPointerDown={(ev) => ev.stopPropagation()}
+      >
         {elementTypes.map((elementType) => (
           <button
             key={elementType}

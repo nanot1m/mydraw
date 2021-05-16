@@ -17,6 +17,7 @@ declare module "./DrawElements" {
 export const config = createDrawElementConfig({
   name: "Line",
   draw(line, ctx) {
+    ctx.lineWidth = 4;
     ctx.strokeStyle = line.color;
     ctx.beginPath();
     ctx.moveTo(line.x0, line.y0);

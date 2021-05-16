@@ -18,6 +18,7 @@ declare module "./DrawElements" {
 export const config = createDrawElementConfig({
   name: "Rect",
   draw(rect, ctx) {
+    ctx.lineWidth = 4;
     ctx.strokeStyle = rect.strokeColor;
     ctx.fillStyle = rect.backgroundColor;
     ctx.beginPath();
