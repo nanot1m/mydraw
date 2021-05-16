@@ -5,7 +5,7 @@ import {
   DrawElementType,
 } from "./draw-elements/DrawElements";
 import "./App.css";
-import { getDrawElementConfigRegistry } from "./draw-elements-drawer/register-drawers";
+import { getDrawElementConfigRegistry } from "./draw-elements-drawer/get-draw-element-config-registry";
 import { getId, GlobalId } from "./global-id";
 
 interface DrawElement<Type extends keyof DrawElements = DrawElementType> {

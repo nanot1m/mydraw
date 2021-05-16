@@ -1,15 +1,27 @@
 import { DrawElementType } from "../draw-elements/DrawElements";
 import { DrawElementConfig } from "./DrawElementConfig";
 
-function importAll(r: any) {
+function importAll(r: __WebpackModuleApi.RequireContext) {
   return r.keys().map(r);
+}
+
+function assertDrawElementConfigModule(
+  module: unknown
+): asserts module is { config: DrawElementConfig<any> } {
+  if (typeof module !== "object" || module == null || !("config" in module)) {
+    throw new TypeError(
+      "*.element.ts files must be a module exporting `config` object"
+    );
+  }
 }
 
 function getAllDrawers(): DrawElementConfig<DrawElementType>[] {
   return importAll(
-    // @ts-ignore
     require.context("../draw-elements/", true, /\.element\.ts$/)
-  ).map((x: { config: DrawElementConfig<any> }) => x.config);
+  ).map((module) => {
+    assertDrawElementConfigModule(module);
+    return module.config;
+  });
 }
 
 let drawElementConfigRegistry: Record<DrawElementType, DrawElementConfig<any>>;
