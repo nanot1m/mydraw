@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import {
   DrawElementByType,
   DrawElements,
@@ -7,6 +7,8 @@ import {
 import "./App.css";
 import { getDrawElementConfigRegistry } from "./draw-elements-drawer/get-draw-element-config-registry";
 import { getId, GlobalId } from "./global-id";
+import { Island } from "./Island";
+import { StateHistory } from "./state-history";
 
 interface DrawElement<Type extends keyof DrawElements = DrawElementType> {
   type: Type;
@@ -50,10 +52,15 @@ function setActiveTool(tool: DrawElementType) {
   return { type: "setActiveTool", tool } as const;
 }
 
+function setDrawElements(drawElements: DrawElement[]) {
+  return { type: "setDrawElements", drawElements } as const;
+}
+
 type Action =
   | ReturnType<typeof createDraftElement>
   | ReturnType<typeof saveDraftElement>
   | ReturnType<typeof setActiveTool>
+  | ReturnType<typeof setDrawElements>
   | ReturnType<typeof updateDraftElement>;
 
 function appReducer(state: AppState, action: Action): AppState {
@@ -94,12 +101,66 @@ function appReducer(state: AppState, action: Action): AppState {
         ...state,
         activeTool: action.tool,
       };
+
+    case "setDrawElements":
+      return {
+        ...state,
+        drawElements: action.drawElements,
+      };
   }
+}
+
+function useHistory<T>(state: T) {
+  const [history] = useState(() => StateHistory.of(state));
+  const [hasNext, setHasNext] = useState(history.hasNext());
+  const [hasPrev, setHasPrev] = useState(history.hasPrev());
+
+  useEffect(() => {
+    if (history.get() !== state) {
+      history.push(state);
+      setHasPrev(history.hasPrev());
+      setHasNext(history.hasNext());
+    }
+  }, [history, state]);
+
+  return {
+    hasPrev,
+    hasNext,
+    goBack() {
+      history.goBack();
+      setHasPrev(history.hasPrev());
+      setHasNext(history.hasNext());
+      return history.get();
+    },
+    goForward() {
+      history.goForward();
+      setHasPrev(history.hasPrev());
+      setHasNext(history.hasNext());
+      return history.get();
+    },
+  };
 }
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const [state, dispatch] = useReducer(appReducer, initialState);
+
+  const history = useHistory(state.drawElements);
+
+  function goBack() {
+    if (history.hasPrev) {
+      const drawEelements = history.goBack();
+      dispatch(setDrawElements(drawEelements));
+    }
+  }
+
+  function goForward() {
+    if (history.hasNext) {
+      const drawEelements = history.goForward();
+      dispatch(setDrawElements(drawEelements));
+    }
+  }
 
   useEffect(() => {
     function resizeCanvas() {
@@ -203,19 +264,26 @@ function App() {
 
   return (
     <div className="App">
-      <div
-        className="App__toolbar"
-        onPointerDown={(ev) => ev.stopPropagation()}
-      >
-        {elementTypes.map((elementType) => (
-          <button
-            key={elementType}
-            disabled={state.activeTool === elementType}
-            onClick={() => dispatch(setActiveTool(elementType))}
-          >
-            {elementType}
+      <div onPointerDown={(ev) => ev.stopPropagation()}>
+        <Island className="App__toolbar">
+          {elementTypes.map((elementType) => (
+            <button
+              key={elementType}
+              disabled={state.activeTool === elementType}
+              onClick={() => dispatch(setActiveTool(elementType))}
+            >
+              {elementType}
+            </button>
+          ))}
+        </Island>
+        <Island className="App__toolbar">
+          <button disabled={!history.hasPrev} onClick={goBack}>
+            ←
           </button>
-        ))}
+          <button disabled={!history.hasNext} onClick={goForward}>
+            →
+          </button>
+        </Island>
       </div>
       <canvas className="App__canvas" ref={canvasRef}></canvas>
     </div>
