@@ -31,7 +31,7 @@ export const config = createDrawElementConfig({
       points: [[x, y]],
     };
   },
-  onPointerMove(dx, dy, draw) {
+  onDrawing(dx, dy, draw) {
     const [x, y] = draw.points[draw.points.length - 1];
     return {
       points: [...draw.points, [x + dx, y + dy]] as Array<[number, number]>,

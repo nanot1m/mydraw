@@ -32,7 +32,7 @@ export const config = createDrawElementConfig({
       y1: y,
     };
   },
-  onPointerMove(dx: number, dy: number, line: Line) {
+  onDrawing(dx: number, dy: number, line: Line) {
     return {
       x1: line.x1 + dx,
       y1: line.y1 + dy,

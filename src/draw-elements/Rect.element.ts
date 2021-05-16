@@ -35,7 +35,7 @@ export const config = createDrawElementConfig({
       y1: y,
     };
   },
-  onPointerMove(dx, dy, rect) {
+  onDrawing(dx, dy, rect) {
     return {
       x1: rect.x1 + dx,
       y1: rect.y1 + dy,

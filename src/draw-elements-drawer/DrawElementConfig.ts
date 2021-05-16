@@ -8,7 +8,7 @@ export interface DrawElementConfig<Type extends DrawElementType> {
   name: Type;
   draw: DrawElementsDrawer<Type>;
   onCreate(x: number, y: number): DrawElementByType<Type>;
-  onPointerMove: (
+  onDrawing: (
     dx: number,
     dy: number,
     element: DrawElementByType<Type>
@@ -17,6 +17,16 @@ export interface DrawElementConfig<Type extends DrawElementType> {
 
 export function createDrawElementConfig<Type extends DrawElementType>(
   config: DrawElementConfig<Type>
-): DrawElementConfig<Type> {
-  return config;
+): DrawElementConfig<Type> & { __TYPE__: "DrawElementConfig" } {
+  return { ...config, __TYPE__: "DrawElementConfig" };
+}
+
+export function isDrawElementConfig(
+  obj: unknown
+): obj is DrawElementConfig<DrawElementType> {
+  return (
+    typeof obj === "object" &&
+    obj != null &&
+    Reflect.get(obj, "__TYPE__") === "DrawElementConfig"
+  );
 }

@@ -1,5 +1,5 @@
 import { DrawElementType } from "../draw-elements/DrawElements";
-import { DrawElementConfig } from "./DrawElementConfig";
+import { DrawElementConfig, isDrawElementConfig } from "./DrawElementConfig";
 
 function importAll(r: __WebpackModuleApi.RequireContext) {
   return r.keys().map(r);
@@ -8,14 +8,18 @@ function importAll(r: __WebpackModuleApi.RequireContext) {
 function assertDrawElementConfigModule(
   module: unknown
 ): asserts module is { config: DrawElementConfig<any> } {
-  if (typeof module !== "object" || module == null || !("config" in module)) {
+  if (
+    typeof module !== "object" ||
+    module == null ||
+    !isDrawElementConfig(Reflect.get(module, "config"))
+  ) {
     throw new TypeError(
       "*.element.ts files must be a module exporting `config` object"
     );
   }
 }
 
-function getAllDrawers(): DrawElementConfig<DrawElementType>[] {
+function getAllDrawElementConfigs(): DrawElementConfig<DrawElementType>[] {
   return importAll(
     require.context("../draw-elements/", true, /\.element\.ts$/)
   ).map((module) => {
@@ -31,7 +35,7 @@ export function getDrawElementConfigRegistry() {
     return drawElementConfigRegistry;
   }
 
-  drawElementConfigRegistry = getAllDrawers().reduce(
+  drawElementConfigRegistry = getAllDrawElementConfigs().reduce(
     (acc, drawElementConfig) => {
       acc[drawElementConfig.name] = drawElementConfig;
       return acc;

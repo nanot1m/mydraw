@@ -136,7 +136,7 @@ function App() {
       }
       dispatch(
         updateDraftElement(
-          activeElementConfig.onPointerMove(
+          activeElementConfig.onDrawing(
             ev.clientX - lastClientX,
             ev.clientY - lastClientY,
             draftElementRef.current.props
