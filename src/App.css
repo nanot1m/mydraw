@@ -15,18 +15,6 @@
   user-select: none;
 }
 
-@keyframes gradient-bg {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
 .App__toolbar {
   display: inline-flex;
   gap: 4px;
