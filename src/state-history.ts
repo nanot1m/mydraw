@@ -45,9 +45,15 @@ export class StateHistory<T> {
     this.#size++;
 
     while (this.#size > this.#maxLength && this.#head.next) {
+      if (this.#curNode === this.#head && this.#curNode.next) {
+        this.#curNode = this.#curNode.next;
+        this.#curNode.prev = null;
+      }
       this.#head = this.#head.next;
+      this.#head.prev = null;
       this.#size--;
     }
+
     return this;
   }
 
