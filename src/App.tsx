@@ -189,10 +189,16 @@ function App() {
     let lastClientX = 0;
     let lastClientY = 0;
 
+    const originalCursorStyle = canvasRef.current
+      ? window.getComputedStyle(canvasRef.current).cursor
+      : "default";
+
     function handlePointerDown(ev: MouseEvent) {
       if (ev.target !== canvasRef.current) {
         return;
       }
+
+      ev.preventDefault();
 
       lastClientX = ev.clientX;
       lastClientY = ev.clientY;
@@ -211,7 +217,9 @@ function App() {
         document.addEventListener("pointermove", handlePointerMoveWhileDrawing);
         document.addEventListener("pointerup", handlePointerUpWhileDrawing);
       }
+
       if (ev.buttons === 4) {
+        if (canvasRef.current) canvasRef.current.style.cursor = "grab";
         document.addEventListener(
           "pointermove",
           handlePointerMoveWhileScrolling
@@ -229,6 +237,8 @@ function App() {
     }
 
     function handlePointerUpWhileScrolling() {
+      if (canvasRef.current)
+        canvasRef.current.style.cursor = originalCursorStyle || "default";
       document.removeEventListener(
         "pointermove",
         handlePointerMoveWhileScrolling
@@ -262,10 +272,17 @@ function App() {
       document.removeEventListener("pointerup", handlePointerUpWhileDrawing);
     }
 
+    function handleWheel(ev: WheelEvent) {
+      dispatch(updateScrollPoint([-ev.deltaX, -ev.deltaY]));
+    }
+
+    document.addEventListener("wheel", handleWheel);
+
     document.addEventListener("pointerdown", handlePointerDown);
 
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("wheel", handleWheel);
     };
   }, [state.activeTool, state.scrollPoint]);
 
