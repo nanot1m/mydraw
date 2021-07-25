@@ -18,4 +18,5 @@
 .App__toolbar {
   display: inline-flex;
   gap: 4px;
+  user-select: none;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { RefObject, useEffect, useReducer, useRef, useState } from "react";
 import {
   DrawElementByType,
   DrawElements,
@@ -26,12 +26,14 @@ interface AppState {
   drawElements: DrawElement[];
   draftElement: DrawElement | null;
   activeTool: DrawElementType;
+  scrollPoint: Point2D;
 }
 
 const initialState: AppState = {
   drawElements: [],
   draftElement: null,
   activeTool: elementTypes[0],
+  scrollPoint: [0, 0],
 };
 
 function createDraftElement(drawElement: DrawElement) {
@@ -48,6 +50,10 @@ function saveDraftElement() {
   return { type: "saveDraftElement" } as const;
 }
 
+function updateScrollPoint(scrollPointShift: Point2D) {
+  return { type: "updateScrollPoint", scrollPointShift } as const;
+}
+
 function setActiveTool(tool: DrawElementType) {
   return { type: "setActiveTool", tool } as const;
 }
@@ -61,6 +67,7 @@ type Action =
   | ReturnType<typeof saveDraftElement>
   | ReturnType<typeof setActiveTool>
   | ReturnType<typeof setDrawElements>
+  | ReturnType<typeof updateScrollPoint>
   | ReturnType<typeof updateDraftElement>;
 
 function appReducer(state: AppState, action: Action): AppState {
@@ -107,6 +114,15 @@ function appReducer(state: AppState, action: Action): AppState {
         ...state,
         drawElements: action.drawElements,
       };
+
+    case "updateScrollPoint":
+      return {
+        ...state,
+        scrollPoint: [
+          state.scrollPoint[0] + action.scrollPointShift[0],
+          state.scrollPoint[1] + action.scrollPointShift[1],
+        ],
+      };
   }
 }
 
@@ -150,38 +166,19 @@ function App() {
 
   function goBack() {
     if (history.hasPrev) {
-      const drawEelements = history.goBack();
-      dispatch(setDrawElements(drawEelements));
+      const drawElements = history.goBack();
+      dispatch(setDrawElements(drawElements));
     }
   }
 
   function goForward() {
     if (history.hasNext) {
-      const drawEelements = history.goForward();
-      dispatch(setDrawElements(drawEelements));
+      const drawElements = history.goForward();
+      dispatch(setDrawElements(drawElements));
     }
   }
 
-  useEffect(() => {
-    function resizeCanvas() {
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        return;
-      }
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
-      canvas.getContext("2d")?.scale(dpr, dpr);
-    }
-
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-    return () => {
-      window.removeEventListener("resize", resizeCanvas);
-    };
-  }, []);
+  useCanvasAutoResize(state, canvasRef);
 
   const draftElementRef = useRef(state.draftElement);
   draftElementRef.current = state.draftElement;
@@ -192,7 +189,54 @@ function App() {
     let lastClientX = 0;
     let lastClientY = 0;
 
-    function handlePointerMove(ev: MouseEvent) {
+    function handlePointerDown(ev: MouseEvent) {
+      if (ev.target !== canvasRef.current) {
+        return;
+      }
+
+      lastClientX = ev.clientX;
+      lastClientY = ev.clientY;
+
+      if (ev.buttons === 1) {
+        dispatch(
+          createDraftElement({
+            id: getId(),
+            type: state.activeTool,
+            props: activeElementConfig.onCreate(
+              ev.clientX - state.scrollPoint[0],
+              ev.clientY - state.scrollPoint[1]
+            ),
+          })
+        );
+        document.addEventListener("pointermove", handlePointerMoveWhileDrawing);
+        document.addEventListener("pointerup", handlePointerUpWhileDrawing);
+      }
+      if (ev.buttons === 4) {
+        document.addEventListener(
+          "pointermove",
+          handlePointerMoveWhileScrolling
+        );
+        document.addEventListener("pointerup", handlePointerUpWhileScrolling);
+      }
+    }
+
+    function handlePointerMoveWhileScrolling(ev: MouseEvent) {
+      const dx = ev.clientX - lastClientX;
+      const dy = ev.clientY - lastClientY;
+      dispatch(updateScrollPoint([dx, dy]));
+      lastClientX = ev.clientX;
+      lastClientY = ev.clientY;
+    }
+
+    function handlePointerUpWhileScrolling() {
+      document.removeEventListener(
+        "pointermove",
+        handlePointerMoveWhileScrolling
+      );
+      document.removeEventListener("pointerup", handlePointerUpWhileScrolling);
+    }
+
+    function handlePointerMoveWhileDrawing(ev: MouseEvent) {
       if (draftElementRef.current == null) {
         return;
       }
@@ -209,85 +253,114 @@ function App() {
       lastClientY = ev.clientY;
     }
 
-    function handlePointerDown(ev: MouseEvent) {
-      if (ev.buttons !== 1) {
-        return;
-      }
-      lastClientX = ev.clientX;
-      lastClientY = ev.clientY;
-      dispatch(
-        createDraftElement({
-          id: getId(),
-          type: state.activeTool,
-          props: activeElementConfig.onCreate(ev.clientX, ev.clientY),
-        })
-      );
-      document.addEventListener("pointermove", handlePointerMove);
-    }
-
-    function handlePointerUp() {
+    function handlePointerUpWhileDrawing() {
       dispatch(saveDraftElement());
-      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener(
+        "pointermove",
+        handlePointerMoveWhileDrawing
+      );
+      document.removeEventListener("pointerup", handlePointerUpWhileDrawing);
     }
 
     document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("pointerup", handlePointerUp);
 
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [state.activeTool]);
+  }, [state.activeTool, state.scrollPoint]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas == null) {
-      return;
-    }
-    const ctx = canvas.getContext("2d");
+    const ctx = canvasRef.current?.getContext("2d");
     if (ctx == null) {
       return;
     }
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    state.drawElements.forEach((drawElement) => {
-      drawElementConfigRegistry[drawElement.type].draw(drawElement.props, ctx);
-    });
-    if (state.draftElement) {
-      drawElementConfigRegistry[state.draftElement.type].draw(
-        state.draftElement.props,
-        ctx
-      );
-    }
-  }, [state.drawElements, state.draftElement]);
+    drawScene(ctx, state.drawElements, state.draftElement, state.scrollPoint);
+  }, [state.drawElements, state.draftElement, state.scrollPoint]);
 
   return (
     <div className="App">
-      <div onPointerDown={(ev) => ev.stopPropagation()}>
-        <Island className="App__toolbar">
-          {elementTypes.map((elementType) => (
-            <button
-              key={elementType}
-              disabled={state.activeTool === elementType}
-              onClick={() => dispatch(setActiveTool(elementType))}
-            >
-              {elementType}
-            </button>
-          ))}
-        </Island>
-        <Island className="App__toolbar">
-          <button disabled={!history.hasPrev} onClick={goBack}>
-            ←
+      <Island className="App__toolbar">
+        {elementTypes.map((elementType) => (
+          <button
+            key={elementType}
+            disabled={state.activeTool === elementType}
+            onClick={() => dispatch(setActiveTool(elementType))}
+          >
+            {elementType}
           </button>
-          <button disabled={!history.hasNext} onClick={goForward}>
-            →
-          </button>
-        </Island>
-      </div>
+        ))}
+      </Island>
+      <Island className="App__toolbar">
+        <button disabled={!history.hasPrev} onClick={goBack}>
+          ←
+        </button>
+        <button disabled={!history.hasNext} onClick={goForward}>
+          →
+        </button>
+      </Island>
       <canvas className="App__canvas" ref={canvasRef}></canvas>
     </div>
   );
 }
 
 export default App;
+
+type Point2D = [x: number, y: number];
+
+function drawScene(
+  ctx: CanvasRenderingContext2D,
+  drawElements: DrawElement[],
+  draftElement: DrawElement | null,
+  [scrollX, scrollY]: Point2D
+) {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.translate(scrollX, scrollY);
+
+  drawElements.forEach((drawElement) => {
+    drawElementConfigRegistry[drawElement.type].draw(drawElement.props, ctx);
+  });
+  if (draftElement) {
+    drawElementConfigRegistry[draftElement.type].draw(draftElement.props, ctx);
+  }
+
+  ctx.translate(-scrollX, -scrollY);
+}
+
+function useCanvasAutoResize(
+  state: AppState,
+  canvasRef: RefObject<HTMLCanvasElement>
+) {
+  const lastState = useRef(state);
+  lastState.current = state;
+
+  useEffect(() => {
+    function resizeCanvas() {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        return;
+      }
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      const ctx = canvas.getContext("2d");
+      if (ctx == null) {
+        return;
+      }
+      ctx.scale(dpr, dpr);
+      drawScene(
+        ctx,
+        lastState.current.drawElements,
+        lastState.current.draftElement,
+        lastState.current.scrollPoint
+      );
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+    };
+  }, [canvasRef]);
+}
