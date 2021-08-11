@@ -1,22 +1,22 @@
 {
   "files": {
     "main.css": "/mydraw/static/css/main.069a1a99.chunk.css",
-    "main.js": "/mydraw/static/js/main.0b20040b.chunk.js",
-    "main.js.map": "/mydraw/static/js/main.0b20040b.chunk.js.map",
+    "main.js": "/mydraw/static/js/main.c7310a7e.chunk.js",
+    "main.js.map": "/mydraw/static/js/main.c7310a7e.chunk.js.map",
     "runtime-main.js": "/mydraw/static/js/runtime-main.25a789be.js",
     "runtime-main.js.map": "/mydraw/static/js/runtime-main.25a789be.js.map",
-    "static/js/2.ad88ea6b.chunk.js": "/mydraw/static/js/2.ad88ea6b.chunk.js",
-    "static/js/2.ad88ea6b.chunk.js.map": "/mydraw/static/js/2.ad88ea6b.chunk.js.map",
+    "static/js/2.f5f50c86.chunk.js": "/mydraw/static/js/2.f5f50c86.chunk.js",
+    "static/js/2.f5f50c86.chunk.js.map": "/mydraw/static/js/2.f5f50c86.chunk.js.map",
     "static/js/3.1983e500.chunk.js": "/mydraw/static/js/3.1983e500.chunk.js",
     "static/js/3.1983e500.chunk.js.map": "/mydraw/static/js/3.1983e500.chunk.js.map",
     "index.html": "/mydraw/index.html",
     "static/css/main.069a1a99.chunk.css.map": "/mydraw/static/css/main.069a1a99.chunk.css.map",
-    "static/js/2.ad88ea6b.chunk.js.LICENSE.txt": "/mydraw/static/js/2.ad88ea6b.chunk.js.LICENSE.txt"
+    "static/js/2.f5f50c86.chunk.js.LICENSE.txt": "/mydraw/static/js/2.f5f50c86.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.25a789be.js",
-    "static/js/2.ad88ea6b.chunk.js",
+    "static/js/2.f5f50c86.chunk.js",
     "static/css/main.069a1a99.chunk.css",
-    "static/js/main.0b20040b.chunk.js"
+    "static/js/main.c7310a7e.chunk.js"
   ]
 }
