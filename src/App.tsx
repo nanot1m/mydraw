@@ -26,8 +26,8 @@ const elementTypes = Object.keys(
 interface AppState {
   drawElements: DrawElement[];
   draftElement: DrawElement | null;
-  selectedElement: DrawElement | null;
-  hoveredElement: DrawElement | null;
+  selectedElements: GlobalId[];
+  hoveredElement: GlobalId | null;
   activeTool: DrawElementType;
   scrollPoint: Point2D;
 }
@@ -35,7 +35,7 @@ interface AppState {
 const initialState: AppState = {
   drawElements: [],
   draftElement: null,
-  selectedElement: null,
+  selectedElements: [],
   hoveredElement: null,
   activeTool: elementTypes[0],
   scrollPoint: [0, 0],
@@ -67,16 +67,16 @@ function setDrawElements(drawElements: DrawElement[]) {
   return { type: "setDrawElements", drawElements } as const;
 }
 
-function setHoveredElement(drawElement: DrawElement | null) {
-  return { type: "setHoveredElement", drawElement } as const;
+function setHoveredElement(drawElementId: GlobalId | null) {
+  return { type: "setHoveredElement", drawElementId } as const;
 }
 
-function dragHoveredDrawElement(shift: Point2D) {
-  return { type: "dragHoveredDrawElement", shift } as const;
+function dragSelectedDrawElements(shift: Point2D) {
+  return { type: "dragSelectedDrawElements", shift } as const;
 }
 
-function selectElement(drawElement: DrawElement | null) {
-  return { type: "selectElement", drawElement } as const;
+function selectElement(drawElementId: GlobalId | null) {
+  return { type: "selectElement", drawElementId } as const;
 }
 
 type Action =
@@ -86,7 +86,7 @@ type Action =
   | ReturnType<typeof setDrawElements>
   | ReturnType<typeof updateScrollPoint>
   | ReturnType<typeof setHoveredElement>
-  | ReturnType<typeof dragHoveredDrawElement>
+  | ReturnType<typeof dragSelectedDrawElements>
   | ReturnType<typeof selectElement>
   | ReturnType<typeof updateDraftElement>;
 
@@ -96,13 +96,13 @@ function appReducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         draftElement: action.element,
-        selectedElement: null,
+        selectedElements: [],
       };
 
     case "selectElement":
       return {
         ...state,
-        selectedElement: action.drawElement,
+        selectedElements: action.drawElementId ? [action.drawElementId] : [],
       };
 
     case "updateDraftElement":
@@ -127,7 +127,7 @@ function appReducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         drawElements: state.drawElements.concat(state.draftElement),
-        selectedElement: state.draftElement,
+        selectedElements: [state.draftElement.id],
         draftElement: null,
       };
 
@@ -155,13 +155,21 @@ function appReducer(state: AppState, action: Action): AppState {
     case "setHoveredElement":
       return {
         ...state,
-        hoveredElement: action.drawElement,
+        hoveredElement: action.drawElementId,
       };
 
-    case "dragHoveredDrawElement": {
+    case "dragSelectedDrawElements": {
+      const selectedElementsSet = new Set(state.selectedElements);
       return {
         ...state,
         drawElements: state.drawElements.map((drawElement) => {
+          if (selectedElementsSet.has(drawElement.id)) {
+            const config = drawElementConfigRegistry[drawElement.type];
+            return {
+              ...drawElement,
+              props: config.shift(drawElement.props, action.shift),
+            };
+          }
           return drawElement;
         }),
       };
@@ -246,6 +254,7 @@ function App() {
 
       if (ev.buttons === 1) {
         if (state.hoveredElement) {
+          dispatch(selectElement(state.hoveredElement));
           document.addEventListener(
             "pointermove",
             handlePointerMoveWhileDragging
@@ -299,7 +308,7 @@ function App() {
     function handlePointerMoveWhileDragging(ev: MouseEvent) {
       const dx = ev.clientX - lastClientX;
       const dy = ev.clientY - lastClientY;
-      dispatch(dragHoveredDrawElement([dx, dy]));
+      dispatch(dragSelectedDrawElements([dx, dy]));
       lastClientX = ev.clientX;
       lastClientY = ev.clientY;
     }
@@ -307,7 +316,6 @@ function App() {
     function handlePointerUpWhileDragging() {
       if (canvasRef.current)
         canvasRef.current.style.cursor = ORIGINAL_CURSOR_STYLE;
-      dispatch(selectElement(state.hoveredElement));
       document.removeEventListener(
         "pointermove",
         handlePointerMoveWhileDragging
@@ -364,14 +372,14 @@ function App() {
       ctx,
       state.drawElements,
       state.draftElement,
-      state.selectedElement,
+      state.selectedElements,
       state.scrollPoint
     );
   }, [
     state.drawElements,
     state.draftElement,
     state.scrollPoint,
-    state.selectedElement,
+    state.selectedElements,
   ]);
 
   function handleMouseMove(ev: React.MouseEvent) {
@@ -384,7 +392,7 @@ function App() {
     ]);
     if (hoveredElement) canvasRef.current.style.cursor = "move";
     else canvasRef.current.style.cursor = ORIGINAL_CURSOR_STYLE;
-    dispatch(setHoveredElement(hoveredElement));
+    dispatch(setHoveredElement(hoveredElement?.id ?? null));
   }
 
   return (
@@ -441,7 +449,7 @@ function drawScene(
   ctx: CanvasRenderingContext2D,
   drawElements: DrawElement[],
   draftElement: DrawElement | null,
-  selectedElement: DrawElement | null,
+  selectedElements: GlobalId[],
   [scrollX, scrollY]: Point2D
 ) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -453,9 +461,12 @@ function drawScene(
   if (draftElement) {
     drawElementConfigRegistry[draftElement.type].draw(draftElement.props, ctx);
   }
-  if (selectedElement) {
-    drawBoundingBox(selectedElement, ctx);
-  }
+  const selectedElementsSet = new Set(selectedElements);
+  drawElements.forEach((drawElement) => {
+    if (selectedElementsSet.has(drawElement.id)) {
+      drawBoundingBox(drawElement, ctx);
+    }
+  });
 
   ctx.translate(-scrollX, -scrollY);
 }
@@ -510,7 +521,7 @@ function useCanvasAutoResize(
         ctx,
         lastState.current.drawElements,
         lastState.current.draftElement,
-        lastState.current.selectedElement,
+        lastState.current.selectedElements,
         lastState.current.scrollPoint
       );
     }

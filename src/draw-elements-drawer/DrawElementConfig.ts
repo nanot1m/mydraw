@@ -23,6 +23,10 @@ export interface DrawElementConfig<Type extends DrawElementType> {
   ): Partial<DrawElementByType<Type>>;
   getBoundingBox(element: DrawElementByType<Type>): BoundingBox;
   containsPoint(element: DrawElementByType<Type>, point: Point2D): boolean;
+  shift(
+    element: DrawElementByType<Type>,
+    point: Point2D
+  ): DrawElementByType<Type>;
 }
 
 const BoundingBoxTable = new WeakMap<

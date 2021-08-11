@@ -55,4 +55,13 @@ export const config = createDrawElementConfig({
       Math.max(line.y0, line.y1) >= y
     );
   },
+  shift(line, [dx, dy]) {
+    return {
+      ...line,
+      x0: line.x0 + dx,
+      y0: line.y0 + dy,
+      x1: line.x1 + dx,
+      y1: line.y1 + dy,
+    };
+  },
 });

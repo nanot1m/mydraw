@@ -54,4 +54,10 @@ export const config = createDrawElementConfig({
       Math.max(y0, y1) >= y
     );
   },
+  shift(draw, [dx, dy]) {
+    return {
+      ...draw,
+      points: draw.points.map(([x, y]) => [x + dx, y + dy]),
+    };
+  },
 });

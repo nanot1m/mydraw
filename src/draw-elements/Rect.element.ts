@@ -60,4 +60,13 @@ export const config = createDrawElementConfig({
       Math.max(rect.y0, rect.y1) + CONTAINS_THRESHOLD >= y
     );
   },
+  shift(rect, [dx, dy]) {
+    return {
+      ...rect,
+      x0: rect.x0 + dx,
+      y0: rect.y0 + dy,
+      x1: rect.x1 + dx,
+      y1: rect.y1 + dy,
+    };
+  },
 });
