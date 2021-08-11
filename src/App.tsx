@@ -236,6 +236,9 @@ function App() {
   const draftElementRef = useRef(state.draftElement);
   draftElementRef.current = state.draftElement;
 
+  const drawElementsRef = useRef(state.drawElements);
+  drawElementsRef.current = state.drawElements;
+
   useEffect(() => {
     const activeElementConfig = drawElementConfigRegistry[state.activeTool];
 
@@ -253,8 +256,12 @@ function App() {
       lastClientY = ev.clientY;
 
       if (ev.buttons === 1) {
-        if (state.hoveredElement) {
-          dispatch(selectElement(state.hoveredElement));
+        const elementUnderPointer = getDrawElementAtPoint(
+          drawElementsRef.current,
+          [ev.clientX - state.scrollPoint[0], ev.clientY - state.scrollPoint[1]]
+        );
+        if (elementUnderPointer) {
+          dispatch(selectElement(elementUnderPointer.id));
           document.addEventListener(
             "pointermove",
             handlePointerMoveWhileDragging
