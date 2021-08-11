@@ -39,4 +39,20 @@ export const config = createDrawElementConfig({
       y1: line.y1 + dy,
     };
   },
+  getBoundingBox(line: Line) {
+    return {
+      x: Math.min(line.x0, line.x1),
+      y: Math.min(line.y0, line.y1),
+      width: Math.abs(line.x0 - line.x1),
+      height: Math.abs(line.y0 - line.y1),
+    };
+  },
+  containsPoint(line, [x, y]) {
+    return (
+      Math.min(line.x0, line.x1) <= x &&
+      Math.max(line.x0, line.x1) >= x &&
+      Math.min(line.y0, line.y1) <= y &&
+      Math.max(line.y0, line.y1) >= y
+    );
+  },
 });

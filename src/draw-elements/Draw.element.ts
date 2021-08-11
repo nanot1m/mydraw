@@ -32,4 +32,26 @@ export const config = createDrawElementConfig({
       points: [...draw.points, [x + dx, y + dy]] as Array<[number, number]>,
     };
   },
+  getBoundingBox(draw) {
+    const x = Math.min(...draw.points.map((p) => p[0]));
+    const y = Math.min(...draw.points.map((p) => p[1]));
+    return {
+      x: x,
+      y: y,
+      width: Math.max(...draw.points.map((p) => p[0])) - x,
+      height: Math.max(...draw.points.map((p) => p[1])) - y,
+    };
+  },
+  containsPoint(draw, [x, y]) {
+    const x0 = Math.min(...draw.points.map((p) => p[0]));
+    const y0 = Math.min(...draw.points.map((p) => p[1]));
+    const x1 = Math.max(...draw.points.map((p) => p[0]));
+    const y1 = Math.max(...draw.points.map((p) => p[1]));
+    return (
+      Math.min(x0, x1) <= x &&
+      Math.max(x0, x1) >= x &&
+      Math.min(y0, y1) <= y &&
+      Math.max(y0, y1) >= y
+    );
+  },
 });

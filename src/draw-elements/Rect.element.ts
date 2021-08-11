@@ -15,6 +15,8 @@ declare module "./DrawElements" {
   }
 }
 
+const CONTAINS_THRESHOLD = 4;
+
 export const config = createDrawElementConfig({
   name: "Rect",
   draw(rect, ctx) {
@@ -28,7 +30,7 @@ export const config = createDrawElementConfig({
   },
   onCreate(x, y) {
     return {
-      backgroundColor: "pink",
+      backgroundColor: "transparent",
       strokeColor: "black",
       x0: x,
       y0: y,
@@ -41,5 +43,21 @@ export const config = createDrawElementConfig({
       x1: rect.x1 + dx,
       y1: rect.y1 + dy,
     };
+  },
+  getBoundingBox(rect) {
+    return {
+      x: Math.min(rect.x0, rect.x1),
+      y: Math.min(rect.y0, rect.y1),
+      width: Math.abs(rect.x1 - rect.x0),
+      height: Math.abs(rect.y1 - rect.y0),
+    };
+  },
+  containsPoint(rect, [x, y]) {
+    return (
+      Math.min(rect.x0, rect.x1) - CONTAINS_THRESHOLD <= x &&
+      Math.max(rect.x0, rect.x1) + CONTAINS_THRESHOLD >= x &&
+      Math.min(rect.y0, rect.y1) - CONTAINS_THRESHOLD <= y &&
+      Math.max(rect.y0, rect.y1) + CONTAINS_THRESHOLD >= y
+    );
   },
 });

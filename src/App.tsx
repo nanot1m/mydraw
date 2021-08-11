@@ -9,6 +9,7 @@ import { getDrawElementConfigRegistry } from "./draw-elements-drawer/get-draw-el
 import { getId, GlobalId } from "./global-id";
 import { Island } from "./Island";
 import { StateHistory } from "./state-history";
+import { Point2D } from "./Point2D";
 
 interface DrawElement<Type extends keyof DrawElements = DrawElementType> {
   type: Type;
@@ -25,6 +26,8 @@ const elementTypes = Object.keys(
 interface AppState {
   drawElements: DrawElement[];
   draftElement: DrawElement | null;
+  selectedElement: DrawElement | null;
+  hoveredElement: DrawElement | null;
   activeTool: DrawElementType;
   scrollPoint: Point2D;
 }
@@ -32,6 +35,8 @@ interface AppState {
 const initialState: AppState = {
   drawElements: [],
   draftElement: null,
+  selectedElement: null,
+  hoveredElement: null,
   activeTool: elementTypes[0],
   scrollPoint: [0, 0],
 };
@@ -62,12 +67,27 @@ function setDrawElements(drawElements: DrawElement[]) {
   return { type: "setDrawElements", drawElements } as const;
 }
 
+function setHoveredElement(drawElement: DrawElement | null) {
+  return { type: "setHoveredElement", drawElement } as const;
+}
+
+function dragHoveredDrawElement(shift: Point2D) {
+  return { type: "dragHoveredDrawElement", shift } as const;
+}
+
+function selectElement(drawElement: DrawElement | null) {
+  return { type: "selectElement", drawElement } as const;
+}
+
 type Action =
   | ReturnType<typeof createDraftElement>
   | ReturnType<typeof saveDraftElement>
   | ReturnType<typeof setActiveTool>
   | ReturnType<typeof setDrawElements>
   | ReturnType<typeof updateScrollPoint>
+  | ReturnType<typeof setHoveredElement>
+  | ReturnType<typeof dragHoveredDrawElement>
+  | ReturnType<typeof selectElement>
   | ReturnType<typeof updateDraftElement>;
 
 function appReducer(state: AppState, action: Action): AppState {
@@ -76,6 +96,13 @@ function appReducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         draftElement: action.element,
+        selectedElement: null,
+      };
+
+    case "selectElement":
+      return {
+        ...state,
+        selectedElement: action.drawElement,
       };
 
     case "updateDraftElement":
@@ -100,6 +127,7 @@ function appReducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         drawElements: state.drawElements.concat(state.draftElement),
+        selectedElement: state.draftElement,
         draftElement: null,
       };
 
@@ -123,6 +151,21 @@ function appReducer(state: AppState, action: Action): AppState {
           state.scrollPoint[1] + action.scrollPointShift[1],
         ],
       };
+
+    case "setHoveredElement":
+      return {
+        ...state,
+        hoveredElement: action.drawElement,
+      };
+
+    case "dragHoveredDrawElement": {
+      return {
+        ...state,
+        drawElements: state.drawElements.map((drawElement) => {
+          return drawElement;
+        }),
+      };
+    }
   }
 }
 
@@ -157,6 +200,8 @@ function useHistory<T>(state: T) {
   };
 }
 
+const ORIGINAL_CURSOR_STYLE = "crosshair";
+
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -189,10 +234,6 @@ function App() {
     let lastClientX = 0;
     let lastClientY = 0;
 
-    const originalCursorStyle = canvasRef.current
-      ? window.getComputedStyle(canvasRef.current).cursor
-      : "default";
-
     function handlePointerDown(ev: MouseEvent) {
       if (ev.target !== canvasRef.current) {
         return;
@@ -204,6 +245,15 @@ function App() {
       lastClientY = ev.clientY;
 
       if (ev.buttons === 1) {
+        if (state.hoveredElement) {
+          document.addEventListener(
+            "pointermove",
+            handlePointerMoveWhileDragging
+          );
+          document.addEventListener("pointerup", handlePointerUpWhileDragging);
+          return;
+        }
+
         dispatch(
           createDraftElement({
             id: getId(),
@@ -238,12 +288,31 @@ function App() {
 
     function handlePointerUpWhileScrolling() {
       if (canvasRef.current)
-        canvasRef.current.style.cursor = originalCursorStyle || "default";
+        canvasRef.current.style.cursor = ORIGINAL_CURSOR_STYLE;
       document.removeEventListener(
         "pointermove",
         handlePointerMoveWhileScrolling
       );
       document.removeEventListener("pointerup", handlePointerUpWhileScrolling);
+    }
+
+    function handlePointerMoveWhileDragging(ev: MouseEvent) {
+      const dx = ev.clientX - lastClientX;
+      const dy = ev.clientY - lastClientY;
+      dispatch(dragHoveredDrawElement([dx, dy]));
+      lastClientX = ev.clientX;
+      lastClientY = ev.clientY;
+    }
+
+    function handlePointerUpWhileDragging() {
+      if (canvasRef.current)
+        canvasRef.current.style.cursor = ORIGINAL_CURSOR_STYLE;
+      dispatch(selectElement(state.hoveredElement));
+      document.removeEventListener(
+        "pointermove",
+        handlePointerMoveWhileDragging
+      );
+      document.removeEventListener("pointerup", handlePointerUpWhileDragging);
     }
 
     function handlePointerMoveWhileDrawing(ev: MouseEvent) {
@@ -284,15 +353,39 @@ function App() {
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("wheel", handleWheel);
     };
-  }, [state.activeTool, state.scrollPoint]);
+  }, [state.activeTool, state.hoveredElement, state.scrollPoint]);
 
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
     if (ctx == null) {
       return;
     }
-    drawScene(ctx, state.drawElements, state.draftElement, state.scrollPoint);
-  }, [state.drawElements, state.draftElement, state.scrollPoint]);
+    drawScene(
+      ctx,
+      state.drawElements,
+      state.draftElement,
+      state.selectedElement,
+      state.scrollPoint
+    );
+  }, [
+    state.drawElements,
+    state.draftElement,
+    state.scrollPoint,
+    state.selectedElement,
+  ]);
+
+  function handleMouseMove(ev: React.MouseEvent) {
+    if (ev.target !== canvasRef.current) {
+      return;
+    }
+    const hoveredElement = getDrawElementAtPoint(state.drawElements, [
+      ev.clientX - state.scrollPoint[0],
+      ev.clientY - state.scrollPoint[1],
+    ]);
+    if (hoveredElement) canvasRef.current.style.cursor = "move";
+    else canvasRef.current.style.cursor = ORIGINAL_CURSOR_STYLE;
+    dispatch(setHoveredElement(hoveredElement));
+  }
 
   return (
     <div className="App">
@@ -315,19 +408,40 @@ function App() {
           →
         </button>
       </Island>
-      <canvas className="App__canvas" ref={canvasRef}></canvas>
+      <canvas
+        className="App__canvas"
+        ref={canvasRef}
+        onMouseMove={handleMouseMove}
+      ></canvas>
     </div>
   );
 }
 
-export default App;
+function getDrawElementAtPoint(
+  drawElements: DrawElement[],
+  point: Point2D
+): DrawElement | null {
+  let hoveredElement: DrawElement | null = null;
 
-type Point2D = [x: number, y: number];
+  for (let i = drawElements.length - 1; i >= 0; i--) {
+    const element = drawElements[i];
+    const config = drawElementConfigRegistry[element.type];
+    if (config.containsPoint(element.props, point)) {
+      hoveredElement = element;
+      break;
+    }
+  }
+
+  return hoveredElement;
+}
+
+export default App;
 
 function drawScene(
   ctx: CanvasRenderingContext2D,
   drawElements: DrawElement[],
   draftElement: DrawElement | null,
+  selectedElement: DrawElement | null,
   [scrollX, scrollY]: Point2D
 ) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -339,8 +453,34 @@ function drawScene(
   if (draftElement) {
     drawElementConfigRegistry[draftElement.type].draw(draftElement.props, ctx);
   }
+  if (selectedElement) {
+    drawBoundingBox(selectedElement, ctx);
+  }
 
   ctx.translate(-scrollX, -scrollY);
+}
+
+const BOUNDING_BOX_DELTA = 6;
+const BOUNDING_BOX_LINE_DASH = [5, 5];
+
+function drawBoundingBox(
+  drawElement: DrawElement<keyof DrawElements>,
+  ctx: CanvasRenderingContext2D
+) {
+  ctx.save();
+  const boundingBox = drawElementConfigRegistry[
+    drawElement.type
+  ].getBoundingBox(drawElement.props);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "blue";
+  ctx.setLineDash(BOUNDING_BOX_LINE_DASH);
+  ctx.strokeRect(
+    boundingBox.x - BOUNDING_BOX_DELTA,
+    boundingBox.y - BOUNDING_BOX_DELTA,
+    boundingBox.width + BOUNDING_BOX_DELTA * 2,
+    boundingBox.height + BOUNDING_BOX_DELTA * 2
+  );
+  ctx.restore();
 }
 
 function useCanvasAutoResize(
@@ -370,6 +510,7 @@ function useCanvasAutoResize(
         ctx,
         lastState.current.drawElements,
         lastState.current.draftElement,
+        lastState.current.selectedElement,
         lastState.current.scrollPoint
       );
     }
