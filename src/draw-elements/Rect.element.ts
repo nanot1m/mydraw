@@ -1,4 +1,4 @@
-import { createDrawElementConfig } from "../draw-elements-drawer/DrawElementConfig";
+import { createDrawElementConfig } from "../draw-elements-drawer/draw-element-config";
 
 export interface Rect {
   strokeColor: string;

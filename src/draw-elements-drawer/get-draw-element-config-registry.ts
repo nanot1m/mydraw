@@ -1,5 +1,5 @@
 import { DrawElementType } from "../draw-elements/DrawElements";
-import { DrawElementConfig, isDrawElementConfig } from "./DrawElementConfig";
+import { DrawElementConfig, isDrawElementConfig } from "./draw-element-config";
 
 function importAll(r: __WebpackModuleApi.RequireContext) {
   return r.keys().map(r);

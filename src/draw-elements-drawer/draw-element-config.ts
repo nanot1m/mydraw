@@ -2,8 +2,8 @@ import {
   DrawElementByType,
   DrawElementType,
 } from "../draw-elements/DrawElements";
-import { Point2D } from "../Point2D";
-import { DrawElementsDrawer } from "./DrawElementsDrawer";
+import { Point2D } from "../point-2d";
+import { DrawElementsDrawer } from "./draw-elements-drawer";
 
 type BoundingBox = {
   x: number;
